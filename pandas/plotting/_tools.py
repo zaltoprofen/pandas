@@ -192,11 +192,13 @@ def _subplots(naxes=None, sharex=False, sharey=False, squeeze=True,
     if subplot_kw is None:
         subplot_kw = {}
 
+    nrows, ncols = _get_layout(naxes, layout=layout, layout_type=layout_type)
+    nplots = nrows * ncols
+
     if ax is None:
         fig = plt.figure(**fig_kw)
     else:
         if is_list_like(ax):
-            ax = _flatten(ax)
             if layout is not None:
                 warnings.warn("When passing multiple axes, layout keyword is "
                               "ignored", UserWarning)
@@ -206,8 +208,12 @@ def _subplots(naxes=None, sharex=False, sharey=False, squeeze=True,
                               "when creating axes", UserWarning,
                               stacklevel=4)
             if len(ax) == naxes:
-                fig = ax[0].get_figure()
-                return fig, ax
+                flat_ax = _flatten(ax)
+                fig = flat_ax[0].get_figure()
+                if squeeze and (nrows == 1 or ncols == 1):
+                    return fig, flat_ax
+                else:
+                    return fig, ax
             else:
                 raise ValueError("The number of passed axes must be {0}, the "
                                  "same as the output plot".format(naxes))
@@ -224,9 +230,6 @@ def _subplots(naxes=None, sharex=False, sharey=False, squeeze=True,
                           "the passed axes is being cleared", UserWarning,
                           stacklevel=4)
             fig.clear()
-
-    nrows, ncols = _get_layout(naxes, layout=layout, layout_type=layout_type)
-    nplots = nrows * ncols
 
     # Create empty object array to hold all axes.  It's easiest to make it 1-d
     # so we can just append subplots upon creation, and then
